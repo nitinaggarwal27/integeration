@@ -1,38 +1,49 @@
 package main
 
 import (
-	"Integration_engine/bitbucket"
 	"Integration_engine/github"
 	"fmt"
+	"html/template"
+	"integration-engine/Integration_engine/Gitlab"
+	"integration-engine/Integration_engine/bitbucket"
 	_ "io/ioutil"
 	"net/http"
 )
 
-// create a Link for GITHUB and BITBUCKET in html page
-const htmlIndex = `<html><body>
-Logged in with <a href="/logingit">GitHub</a>
-<br><BR><BR><Br><BR>Logged in with <a href="/loginbitbucket">Bitbucket</a>
-<br><BR><BR><Br><BR>Logged in with <a href="/logingitlab">GitLab</a>
-</body></html>`
+var tpl *template.Template
 
-// main function of the web page
+func init() {
+	tpl = template.Must(template.ParseGlob("Html_code/*.html"))
+}
+
 func main() {
-	http.HandleFunc("/", handleMain)
-	http.HandleFunc("/logingit", github.HandleGitHubLogin)
+	//	c := gin.Default()
 
-	http.HandleFunc("/loginbitbucket", bitbucket.HandleBitbucketLogin)
-	//	http.HandleFunc("/logingitlab", handlegitlab)
-	http.HandleFunc("/welcomegit", github.HandleGitHubCallback)
-	http.HandleFunc("/welcomebitbucket", bitbucket.HandlebitbucketCallback)
-	//	http.HandleFunc("/welcomegitlab", handlegitlabCallback)
-	fmt.Print("Started running on http://127.0.0.1:9000\n")
-	fmt.Println(http.ListenAndServe(":9000", nil))
+	http.HandleFunc("/", handleMain)
+
+	http.HandleFunc("/logingit", github.HandleGitHubLogin)      // github
+	http.HandleFunc("/welcomegit", github.HandleGitHubCallback) // github
+	http.HandleFunc("/gitrepofetch", github.FetchRepositry)     // github
+	http.HandleFunc("/gitcreate", github.Create)                //github
+	http.HandleFunc("/gitdelete", github.Delete)
+
+	http.HandleFunc("/loginbitbucket", bitbucket.HandleBitbucketLogin)      //bitbucket
+	http.HandleFunc("/welcomebitbucket", bitbucket.HandlebitbucketCallback) //bitbucket
+	http.HandleFunc("/bitbucketrepofetch", bitbucket.Fetchrepositry)        //bitbucket
+	http.HandleFunc("/Createbitbucket", bitbucket.Create)                   //bitbucket
+	http.HandleFunc("/Deletebitbucket", bitbucket.Delete)
+
+	http.HandleFunc("/logingitlab", Gitlab.Handlegitlab)       //Standard Gitlab
+	http.HandleFunc("/gitlabcallback", Gitlab.GitlabCallback)  //Standard Gitlab
+	http.HandleFunc("/gitlabrepofetch", Gitlab.Fetchrepositry) //Standard GitLab
+	http.HandleFunc("/gitlabcreate", Gitlab.Create)            //Standard Gitlab
+	http.HandleFunc("/gitlabdelete", Gitlab.Delete)            //Standard GitLab
+
+	fmt.Print("Started running on http:localhost:9000\n") //local host
+	fmt.Println(http.ListenAndServe(":9000", nil))        //local host
 
 }
 
-//Main API or url through which we can access the github and other account
 func handleMain(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(htmlIndex))
+	tpl.ExecuteTemplate(w, "Home.html", nil)
 }
